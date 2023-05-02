@@ -3,60 +3,49 @@ local source = {}
 local typesDict = {}
 typesDict['feat'] = {
 	label = 'feat',
-	emoji = '✨',
 	documentation = 'A new feature'
 }
 typesDict['fix'] = {
 	label = 'fix',
-	emoji = '🐛',
 	documentation = 'A bug fix'
 }
 typesDict['docs'] = {
 	label = 'docs',
-	emoji = '📚',
 	documentation = 'Documentation only changes',
 }
 typesDict['style'] = {
 	label = 'style',
-	emoji = '💎',
 	documentation =
 	'Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)',
 }
 typesDict['refactor'] = {
 	label = 'refactor',
-	emoji = '📦',
 	documentation = 'A code change that neither fixes a bug nor adds a feature',
 }
 typesDict['perf'] = {
 	label = 'perf',
-	emoji = '🚀',
 	documentation = 'A code change that improves performance',
 }
 typesDict['test'] = {
 	label = 'test',
-	emoji = '🚨',
 	documentation = 'Adding missing tests or correcting existing tests',
 }
 typesDict['build'] = {
 	label = 'build',
-	emoji = '🛠',
 	documentation = 'Changes that affect the build system or external dependencies',
-	scopes = { 'gulp, broccoli, npm' }
+	scopes = { 'gulp', 'broccoli', 'npm' }
 }
 typesDict['ci'] = {
 	label = 'ci',
-	emoji = '⚙️',
 	documentation = 'Changes to our CI configuration files and scripts',
 	scopes = { 'Travis', 'Circle', 'BrowserStack', 'SauceLabs' }
 }
 typesDict['chore'] = {
 	label = 'chore',
-	emoji = '♻️',
 	documentation = 'Other changes that dont modify src or test files',
 }
 typesDict['revert'] = {
 	label = 'revert',
-	emoji = '🗑',
 	documentation = 'Reverts a previous commit',
 }
 
@@ -64,9 +53,6 @@ function source.setup(config)
 	local cnf = config or {}
 	if cnf['typesDict'] == nil then
 		cnf['typesDict'] = typesDict
-	end
-	if cnf['insertText'] == nil then
-		cnf['insertText'] = function(label) return label end
 	end
 	vim.g.cmp_gitcommit_config = cnf
 	return cnf
@@ -83,19 +69,22 @@ local function split(inputstr, sep)
 	return t
 end
 
-local function load_names()
+local function load_filenames()
 	local current_dir_path = vim.fn.expand([[%:p:h:h]])
 	if not vim.fn.isdirectory(current_dir_path) then
 		return {}
 	end
 	local cmd = "(cd " .. current_dir_path .. " && git ls-files)"
 	local handle = io.popen(cmd)
-	local scopes = handle:read("*a")
-	handle:close()
+	local filelist = ""
+	if handle ~= nil then
+		filelist = handle:read("*a")
+		handle:close()
+	end
 
 	local names = {}
-	if scopes ~= "" then
-		for line in scopes:gmatch("[^\r\n]+") do
+	if filelist ~= "" then
+		for line in filelist:gmatch("[^\r\n]+") do
 			for _, name in ipairs(split(line, [[/]])) do
 				table.insert(names, name)
 			end
@@ -117,7 +106,7 @@ end
 
 source.new = function()
 	source.config = vim.g.cmp_gitcommit_config or source.setup({})
-	source.names = load_names()
+	source.names = load_filenames()
 
 	local types = {}
 	for _, v in pairs(source.config['typesDict']) do
@@ -150,9 +139,18 @@ local function is_scope(request)
 	return false
 end
 
+local function is_type(request)
+	local line = vim.api.nvim_get_current_line()
+	local scope_start = string.find(line, "%(")
+	local col = request.context.cursor.col
+	if scope_start == nil or col <= scope_start then
+		return true
+	end
+	return false
+end
+
 source.complete = function(self, request, callback)
-	if (request.context.option.reason == 'manual' and request.context.cursor.row == 1 and request.context.cursor.col == 1) or
-		(request.context.option.reason == 'auto' and request.context.cursor.row == 1 and request.context.cursor.col == 2) then
+	if is_type(request) and request.context.cursor.row == 1 then
 		callback({
 			items = self:_get_candidates(self.types),
 			isIncomplete = true,
@@ -169,13 +167,11 @@ source.complete = function(self, request, callback)
 			end
 		end
 		callback()
-	elseif request.context.option.reason == 'auto' then
+	else
 		callback({
 			items = self:_get_candidates_name(self.names),
 			isIncomplete = true,
 		})
-	else
-		callback()
 	end
 end
 

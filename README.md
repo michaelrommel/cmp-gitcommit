@@ -2,50 +2,44 @@
 
 `gitcommit` source for [nvim-cmp](https://github.com/hrsh7th/nvim-cmp)
 
-`cmp-gitcommit` is a fork of [cmp-conventionalcommits](https://github.com/davidsierradz/cmp-conventionalcommits)
-
-<details>
-<summary>gif</summary>
-
-![gif](https://github.com/Cassin01/cmp-gitcommit/blob/eef73658a6039b79c72533255235ed2c1e166fa9/asset/screen.gif)
-
-</details>
+`cmp-gitcommit` is a fork of [cmp-cgitcommit](https://github.com/Cassin01/cmp-gitcommit)
+which in turn is a fork of [cmp-conventionalcommits](https://github.com/davidsierradz/cmp-conventionalcommits)
 
 ## Features
 
 ### Features that cmp-gitcommit provides but cmp-conventionalcommits
 
 - no npm dependencies
+- no emojis
+- works in more places on the first line
 
 ### Features that cmp-conventionalcommits provides but cmp-gitcommit
 
 - commitlint support
 - lerna support
 
-### :warning: A shell command invoked incline
-
-```shell
-(cd {%p:h:h} && git ls-files)
-```
-
-If you are not POSIX compliant shell user, please make a request. I will deal with it.
-
 ### Sources that this plugin provides
 
 This plugin provides
 
-- types (`ci: 👷`, `ci`, `ci:`, etc)
-- scopes (`Travisi`, `Circle`, `BrowserStack`, etc)
+- types (`ci`, `fix`, `feat` etc)
+- scopes (`Travis`, `Circle`, `BrowserStack`, etc)
 - tracked path object (`README.md`, `src`, `.gitignore`, etc)
 
 sources for [nvim-cmp](https://github.com/hrsh7th/nvim-cmp)
 
 ## Usage
 
-Packer
+Lazy
+
 ```lua
-use 'hrsh7th/nvim-cmp'
-use { 'Cassin01/cmp-gitcommit', after = { 'nvim-cmp' } }
+{
+    "michaelrommel/cmp-gitcommit",
+    lazy = true,
+    config = function()
+        require("cmp-gitcommit").setup({})
+    end,
+},
 ```
 
 ```lua
@@ -55,6 +49,7 @@ require('cmp').setup {
 ```
 
 ## Configuration
+
 ```lua
 use {
    -- ...
@@ -63,18 +58,15 @@ use {
        typesDict = {
          ci = {
            label = 'ci',
-           emoji = '👷',
            documentation = 'Changes to our CI configuration files and scripts',
-           scopes = {'Travisi', 'Circle', 'BrowserStack', 'SauceLabs'} -- FEATURE custom scopes !!
+           scopes = {'Travis', 'Circle', 'BrowserStack', 'SauceLabs'} -- FEATURE custom scopes !!
          }
          style = {
            label = 'style',
-           emoji = '🎨',
            documentation = 'Changes that do not affect the meaning of the code',
          }
          test = {
            label = 'test',
-           emoji = '🚨',
            documentation = 'Adding missing tests or correcting existing tests',
          }
          -- ...
